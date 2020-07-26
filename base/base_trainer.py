@@ -48,12 +48,23 @@ class BaseTrainer:
                 trainable_params = [{'params': filter(lambda p:p.requires_grad, self.model.module.get_decoder_params())},
                                     {'params': filter(lambda p:p.requires_grad, self.model.module.get_backbone_params()), 
                                     'lr': config['optimizer']['args']['lr'] / 10}]
+                if hasattr(self.model.module, 'get_splines_params'):
+                    trainable_params.append(
+                        {'params': filter(lambda p:p.requires_grad, self.model.module.get_splines_params()),
+                         'weight_decay': 0, 'lr': config['optimizer']['args']['lr'] * 10})
             else:
                 trainable_params = [{'params': filter(lambda p:p.requires_grad, self.model.get_decoder_params())},
                                     {'params': filter(lambda p:p.requires_grad, self.model.get_backbone_params()), 
                                     'lr': config['optimizer']['args']['lr'] / 10}]
+                if hasattr(self.model.module, 'get_splines_params'):
+                    trainable_params.append(
+                        {'params': filter(lambda p:p.requires_grad, self.model.module.get_splines_params()),
+                         'weight_decay': 0, 'lr': config['optimizer']['args']['lr'] * 10})
         else:
             trainable_params = filter(lambda p:p.requires_grad, self.model.parameters())
+            if hasattr(self.model.module, 'get_splines_params'):
+                print("did not implement the filter for the bases parameters")
+                assert False
         self.optimizer = get_instance(torch.optim, 'optimizer', config, trainable_params)
         self.lr_scheduler = getattr(utils.lr_scheduler, config['lr_scheduler']['type'])(self.optimizer, self.epochs, len(train_loader))
 
